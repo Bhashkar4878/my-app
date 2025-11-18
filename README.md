@@ -1,70 +1,69 @@
-# Getting Started with Create React App
+# Twitter Lite (React Native client + Mongo backend)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This repo now contains:
 
-## Available Scripts
+- A React Native compatible front-end (currently using CRA for web preview) under `src/`
+- A Node/Express API server with MongoDB persistence under `server/`
 
-In the project directory, you can run:
+The login/register screens call the `/api/auth/*` endpoints, while the feed pulls from `/api/posts`. Tokens are issued as JSON Web Tokens (JWT) and must be sent in the `Authorization: Bearer <token>` header for protected routes.
 
-### `npm start`
+## Stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- React / React Native compatible UI code
+- Express + MongoDB (via Mongoose) backend
+- JWT authentication with bcrypt password hashing
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Local setup
 
-### `npm test`
+### 1. Frontend (React)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```bash
+npm install
+npm start
+```
 
-### `npm run build`
+The dev server listens on `http://localhost:3000`.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 2. Backend (Express + MongoDB)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+cd server
+npm install
+copy env.example .env   # or manually create server/.env
+npm run dev
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Environment variables:
 
-### `npm run eject`
+| Name | Description | Default |
+| --- | --- | --- |
+| `PORT` | API port | `4000` |
+| `MONGODB_URI` | Mongo connection string | `mongodb://127.0.0.1:27017/twitterlite` |
+| `JWT_SECRET` | Secret for signing tokens | _required_ |
+| `JWT_EXPIRES_IN` | Token lifetime | `1d` |
+| `CLIENT_ORIGIN` | Comma-separated list of allowed origins | `http://localhost:3000` |
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+The backend automatically creates the `twitterlite` database (or whatever you configure). Make sure MongoDB is running locally or supply a cloud URI (e.g., Atlas).
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### API quick reference
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+| Method | Route | Description |
+| --- | --- | --- |
+| `POST` | `/api/auth/register` | Body: `{ username, password }`. Creates account. |
+| `POST` | `/api/auth/login` | Body: `{ username, password }`. Returns `{ token }`. |
+| `GET` | `/api/posts` | Requires JWT. Returns recent posts. |
+| `POST` | `/api/posts` | Requires JWT. Body: `{ content }`. Creates a new post. |
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Tokens returned by `login` should be stored on the device (e.g., secure storage) and attached to subsequent requests.
 
-## Learn More
+## Testing
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. Run MongoDB (`mongod`) locally or provision a URI.
+2. Start the backend (`npm run dev` inside `server/`).
+3. Launch the frontend (`npm start` at repo root).
+4. Register a user, then log in and create a post. Refresh to verify the data persists.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Deployment notes
 
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- For production, never commit the `server/.env` file. Set environment variables via your hosting platform.
+- Update `REACT_APP_API_BASE` (see `src/api.js`) if the API lives on a different domain/port.
