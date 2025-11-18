@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 const libreUrl = process.env.LIBRE_TRANSLATE_URL || 'https://libretranslate.com/translate';
+const libreKey = process.env.LIBRE_TRANSLATE_API_KEY || null;
 
 router.post('/', async (req, res) => {
   const { text, targetLang } = req.body || {};
@@ -20,6 +21,7 @@ router.post('/', async (req, res) => {
         source: 'auto',
         target: targetLang,
         format: 'text',
+        ...(libreKey ? { api_key: libreKey } : {}),
       }),
     });
 
