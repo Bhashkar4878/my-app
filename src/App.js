@@ -6,23 +6,34 @@ import Feed from './components/Feed';
 import ExplorePage from './components/ExplorePage';
 import MessagesPage from './components/MessagesPage';
 import ProfilePage from './components/ProfilePage';
+import SavedPostsPage from './components/SavedPostsPage';
 import RightSidebar from './components/RightSidebar';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import ThemeToggle from './components/ThemeToggle';
+import SidebarNav from './components/SidebarNav';
 import { useTranslation } from './contexts/TranslationContext';
+import { useTheme } from './contexts/ThemeContext';
 import './styles/app.css';
 
 
 function App(){
-const location = useLocation();
 const token = localStorage.getItem('token');
 const { t } = useTranslation();
+const { theme } = useTheme();
 
 
 return (
 <div className="app-root">
-<header className="topbar">
-<h1 className="brand">{t('brand', 'X Clone')}</h1>
-<nav>
+      <header className="topbar">
+        <div className="brand">
+          <img 
+            src={theme === 'light' ? '/Black.png' : '/White.png'} 
+            alt="Next" 
+            className="brand-logo" 
+          />
+        </div>
+        <nav className="topbar-nav">
+{token && <ThemeToggle />}
 {token ? (
 <button onClick={() => { localStorage.removeItem('token'); window.location = '/login'; }}>{t('nav.logout')}</button>
 ) : (
@@ -36,13 +47,7 @@ return (
 
 <div className="layout">
 <aside className="sidebar-left">
-<nav className="sidebar-nav">
-<Link to="/" className={location.pathname === '/' ? 'nav-item active' : 'nav-item'}>🏠 {t('nav.home')}</Link>
-<Link to="/explore" className={location.pathname === '/explore' ? 'nav-item active' : 'nav-item'}>🔍 {t('nav.explore')}</Link>
-<Link to="/notifications" className={location.pathname === '/notifications' ? 'nav-item active' : 'nav-item'}>🔔 {t('nav.notifications')}</Link>
-<Link to="/messages" className={location.pathname === '/messages' ? 'nav-item active' : 'nav-item'}>✉️ {t('nav.messages')}</Link>
-<Link to="/profile" className={location.pathname === '/profile' ? 'nav-item active' : 'nav-item'}>👤 {t('nav.profile')}</Link>
-</nav>
+<SidebarNav />
 <LanguageSwitcher />
 </aside>
 
@@ -54,6 +59,7 @@ return (
 <Route path="/explore" element={token ? <ExplorePage /> : <Navigate to="/login" />} />
 <Route path="/notifications" element={token ? <div className="placeholder-page">{t('notificationsPlaceholder')}</div> : <Navigate to="/login" />} />
 <Route path="/messages" element={token ? <MessagesPage /> : <Navigate to="/login" />} />
+<Route path="/saved" element={token ? <SavedPostsPage /> : <Navigate to="/login" />} />
 <Route path="/profile" element={token ? <ProfilePage /> : <Navigate to="/login" />} />
 </Routes>
 </main>

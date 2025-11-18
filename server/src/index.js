@@ -4,6 +4,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
 
 dotenv.config();
 
@@ -33,11 +34,28 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
 app.use(morgan('dev'));
+
+// Skip JSON parsing for multipart/form-data (file uploads)
+// express.json() automatically skips multipart, but we'll be explicit
+app.use((req, res, next) => {
+  const contentType = req.headers['content-type'] || '';
+  if (contentType.includes('multipart/form-data')) {
+    return next(); // Skip JSON parsing for file uploads
+  }
+  next();
+});
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve uploaded images statically
 const uploadsDir = path.join(__dirname, '..', 'uploads');
+console.log('Serving static files from:', uploadsDir);
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('Created uploads directory:', uploadsDir);
+}
 app.use('/uploads', express.static(uploadsDir));
 
 app.get('/health', (_req, res) => {

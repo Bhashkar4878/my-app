@@ -41,6 +41,26 @@ const PostSchema = new mongoose.Schema(
           type: Date,
           default: Date.now,
         },
+        isFlagged: {
+          type: Boolean,
+          default: false,
+        },
+        moderationCategories: [
+          {
+            category: { type: String, required: true },
+            detail: { type: String, required: true },
+          },
+        ],
+      },
+    ],
+    isFlagged: {
+      type: Boolean,
+      default: false,
+    },
+    moderationCategories: [
+      {
+        category: { type: String, required: true },
+        detail: { type: String, required: true },
       },
     ],
   },

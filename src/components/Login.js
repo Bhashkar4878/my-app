@@ -19,7 +19,8 @@ setErr('');
 try{
 const res = await api.auth.login(username, password);
 localStorage.setItem('token', res.token);
-nav('/');
+localStorage.setItem('username', username);
+window.location.href = '/';
 }catch(err){
 setErr(err.data?.message || 'Login failed');
 }

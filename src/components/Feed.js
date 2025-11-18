@@ -8,28 +8,56 @@ import { useTranslation } from '../contexts/TranslationContext';
 
 export default function Feed(){
 const [posts, setPosts] = useState([]);
-const [loading, setLoading] = useState(true);
+const [initialLoading, setInitialLoading] = useState(true);
+const [loadingMore, setLoadingMore] = useState(false);
 const [err, setErr] = useState('');
+const [nextCursor, setNextCursor] = useState(null);
+const [hasMore, setHasMore] = useState(true);
 const { t } = useTranslation();
 
 
-async function load(){
-setLoading(true);
+async function loadInitial(){
+setInitialLoading(true);
+setErr('');
 try{
-const data = await api.posts.fetchAll();
-setPosts(data);
-}catch(e){ setErr(t('feed.errorLoad')); }
-setLoading(false);
+const data = await api.posts.fetchPage();
+const hiddenPosts = JSON.parse(localStorage.getItem('hiddenPosts') || '[]');
+// Filter out hidden posts
+const visiblePosts = (data.posts || []).filter(p => !hiddenPosts.includes(p.id));
+setPosts(visiblePosts);
+setNextCursor(data.nextCursor || null);
+setHasMore(Boolean(data.hasMore));
+}catch(e){
+setErr(t('feed.errorLoad'));
+}
+setInitialLoading(false);
+}
+
+async function loadMore(){
+if(loadingMore || !hasMore) return;
+setLoadingMore(true);
+try{
+const data = await api.posts.fetchPage({ cursor: nextCursor });
+const hiddenPosts = JSON.parse(localStorage.getItem('hiddenPosts') || '[]');
+// Filter out hidden posts
+const visiblePosts = (data.posts || []).filter(p => !hiddenPosts.includes(p.id));
+setPosts(prev => [...prev, ...visiblePosts]);
+setNextCursor(data.nextCursor || null);
+setHasMore(Boolean(data.hasMore));
+}catch(e){
+setErr(t('feed.errorLoad'));
+}
+setLoadingMore(false);
 }
 
 
-useEffect(()=>{ load(); },[]);
+useEffect(()=>{ loadInitial(); },[]);
 
 
 async function handleCreate(content, imageFile){
 try{
 await api.posts.create(content, imageFile);
-await load();
+await loadInitial();
 }catch(e){ setErr(t('feed.errorCreate')); }
 }
 
@@ -47,10 +75,18 @@ try{
 const newComment = await api.posts.comment(postId, text);
 setPosts(prev =>
 prev.map(p =>
-p.id === postId ? { ...p, comments: [...(p.comments || []), newComment] } : p
+p.id === postId ? { 
+  ...p, 
+  comments: [...(p.comments || []), newComment],
+  commentsCount: (p.commentsCount || 0) + 1
+} : p
 )
 );
 }catch(e){ setErr(t('feed.errorComment')); }
+}
+
+function handleHidePost(postId){
+setPosts(prev => prev.filter(p => p.id !== postId));
 }
 
 
@@ -58,7 +94,10 @@ return (
 <div className="feed-root">
 <PostComposer onCreate={handleCreate} />
 {err && <div className="error">{err}</div>}
-{loading ? <div>{t('feed.loading')}</div> : (
+{initialLoading ? (
+<div>{t('feed.loading')}</div>
+) : (
+<>
 <div className="posts-list">
 {posts.map(p => (
 <PostItem
@@ -66,10 +105,20 @@ key={p.id}
 post={p}
 onLike={() => handleLike(p.id)}
 onComment={(text) => handleComment(p.id, text)}
+onHide={handleHidePost}
 />
 ))}
 </div>
+{hasMore && (
+<div className="feed-load-more">
+<button type="button" onClick={loadMore} disabled={loadingMore}>
+{loadingMore ? t('feed.loading') : t('feed.loadMore')}
+</button>
+</div>
+)}
+</>
 )}
 </div>
 );
 }
+

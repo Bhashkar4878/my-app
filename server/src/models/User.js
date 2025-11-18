@@ -39,6 +39,14 @@ const UserSchema = new mongoose.Schema(
       maxlength: 100,
       default: '',
     },
+    profilePicture: {
+      type: String,
+      default: null,
+    },
+    bannerImage: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );
