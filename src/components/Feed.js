@@ -15,7 +15,8 @@ const [nextCursor, setNextCursor] = useState(null);
 const [hasMore, setHasMore] = useState(true);
 const { t } = useTranslation();
 
-
+const loadInitial = useCallback(async () => { ... }, []);
+useEffect(() => { loadInitial(); }, [loadInitial]);
 async function loadInitial(){
 setInitialLoading(true);
 setErr('');
