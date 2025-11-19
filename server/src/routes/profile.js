@@ -71,6 +71,7 @@ router.get('/me', async (req, res) => {
     );
 
     res.json({
+      id: user._id.toString(),
       username: user.username,
       bio: user.bio || '',
       location: user.location || 'Earth',
@@ -106,17 +107,100 @@ router.get('/suggestions', async (req, res) => {
       .limit(5)
       .select('username bio profilePicture');
 
+    // load current user's following list to compute isFollowing
+    const me = await User.findById(req.user.id).select('following').lean();
+    const followingSet = new Set((me?.following || []).map(id => id.toString()));
+
     const suggestions = users.map((u) => ({
       id: u._id.toString(),
       username: u.username,
       bio: u.bio || '',
       profilePicture: u.profilePicture || null,
+      isFollowing: followingSet.has(u._id.toString()),
     }));
 
     res.json(suggestions);
   } catch (err) {
     console.error('Profile suggestions error', err);
     res.status(500).json({ message: 'Could not load suggestions' });
+  }
+});
+
+// Public profile view by username
+router.get('/:username', async (req, res) => {
+  try {
+    const username = req.params.username;
+    if (!username) return res.status(400).json({ message: 'Username is required' });
+    const user = await User.findOne({ usernameLower: username.toLowerCase() }).lean();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const posts = await Post.find({ author: user._id }).sort({ createdAt: -1 }).lean();
+
+    // compute whether current user follows this user
+    const me = await User.findById(req.user.id).select('following').lean();
+    const isFollowing = (me?.following || []).some(id => id.toString() === user._id.toString());
+
+    const likesReceived = posts.reduce((sum, post) => sum + (post.likes?.length || 0), 0);
+
+    res.json({
+      username: user.username,
+      bio: user.bio || '',
+      location: user.location || 'Earth',
+      website: user.website || 'yourwebsite.com',
+      joinedAt: user.createdAt,
+      profilePicture: user.profilePicture || null,
+      bannerImage: user.bannerImage || null,
+      isFollowing,
+      stats: {
+        posts: posts.length,
+        likesReceived,
+        following: (user.following || []).length,
+        followers: (user.followers || []).length,
+      },
+      posts: posts.map((post) => ({
+        id: post._id.toString(),
+        content: post.content,
+        createdAt: post.createdAt,
+        imageUrl: post.imageUrl || null,
+        likesCount: post.likes?.length || 0,
+        commentsCount: post.comments?.length || 0,
+      })),
+    });
+  } catch (err) {
+    console.error('Public profile error', err);
+    res.status(500).json({ message: 'Could not load profile' });
+  }
+});
+
+// Toggle follow/unfollow by id
+router.post('/:id/follow', async (req, res) => {
+  try {
+    const targetId = req.params.id;
+    if (!targetId) return res.status(400).json({ message: 'Target user id required' });
+    if (targetId === req.user.id) return res.status(400).json({ message: 'Cannot follow yourself' });
+
+    const target = await User.findById(targetId);
+    const me = await User.findById(req.user.id);
+    if (!target || !me) return res.status(404).json({ message: 'User not found' });
+
+    const alreadyFollowing = (me.following || []).some(id => id.toString() === targetId.toString());
+    if (alreadyFollowing) {
+      me.following = (me.following || []).filter(id => id.toString() !== targetId.toString());
+      target.followers = (target.followers || []).filter(id => id.toString() !== me._id.toString());
+    } else {
+      me.following = me.following || [];
+      target.followers = target.followers || [];
+      me.following.push(target._id);
+      target.followers.push(me._id);
+    }
+
+    await me.save();
+    await target.save();
+
+    return res.json({ following: !alreadyFollowing });
+  } catch (err) {
+    console.error('Follow toggle error', err);
+    res.status(500).json({ message: 'Could not update follow state' });
   }
 });
 

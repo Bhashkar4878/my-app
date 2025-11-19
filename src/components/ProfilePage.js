@@ -3,6 +3,7 @@ import api from '../api';
 import '../styles/feed.css';
 import { useTranslation } from '../contexts/TranslationContext';
 import useContentTranslation from '../hooks/useContentTranslation';
+import { useParams } from 'react-router-dom';
 
 function normalizeBio(value){
 if(!value) return '';
@@ -60,6 +61,7 @@ return (
 
 
 export default function ProfilePage(){
+const params = useParams();
 const [profile, setProfile] = useState(null);
 const [loading, setLoading] = useState(true);
 const [err, setErr] = useState('');
@@ -84,19 +86,24 @@ async function load(){
 setLoading(true);
 setErr('');
 try{
-const data = await api.profile.me();
-if(mounted){
-setProfile(data);
-setBioDraft(normalizeBio(data.bio));
-}
+  let data;
+  if (params?.username) {
+    data = await api.profile.getByUsername(params.username);
+  } else {
+    data = await api.profile.me();
+  }
+  if(mounted){
+    setProfile(data);
+    setBioDraft(normalizeBio(data.bio));
+  }
 }catch(e){
-if(mounted) setErr(e.data?.message || 'Could not load profile');
+  if(mounted) setErr(e.data?.message || 'Could not load profile');
 }
 setLoading(false);
 }
 load();
 return () => { mounted = false; };
-}, []);
+}, [params?.username]);
 
 useEffect(() => {
 if(profile){

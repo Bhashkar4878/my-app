@@ -90,6 +90,7 @@ export const explore = {
 export const profile = {
  me: () => request('/profile/me'),
  suggestions: () => request('/profile/suggestions'),
+  getByUsername: (username) => request(`/profile/${encodeURIComponent(username)}`),
  updateBio: (bio) =>
   request('/profile/bio', {
     method: 'PUT',
@@ -123,6 +124,7 @@ export const profile = {
    });
    return request('/profile/banner', { method: 'POST', body: form }, { isFormData: true });
  },
+  follow: (userId) => request(`/profile/${userId}/follow`, { method: 'POST' }),
 };
 
 export const translate = {

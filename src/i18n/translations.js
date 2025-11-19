@@ -73,6 +73,7 @@ const baseEn = {
     commentPlaceholder: 'Add a comment...',
     replyButton: 'Reply',
     followButton: 'Follow',
+    followingButton: 'Following',
     noSuggestions: 'No suggestions yet.',
     searchPlaceholder: 'Search X',
     translate: {
@@ -173,6 +174,7 @@ const hi = {
     commentPlaceholder: 'टिप्पणी जोड़ें...',
     replyButton: 'उत्तर दें',
     followButton: 'फॉलो करें',
+    followingButton: 'फ़ॉलो कर रहे हैं',
     noSuggestions: 'अभी कोई सुझाव नहीं।',
     searchPlaceholder: 'एक्स खोजें',
     translate: {

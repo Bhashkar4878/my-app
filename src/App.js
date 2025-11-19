@@ -52,7 +52,8 @@ return (
 </aside>
 
 <main className="layout-center">
-<Routes>
+  <Routes>
+  <Route path="/profile/:username" element={token ? <ProfilePage /> : <Navigate to="/login" />} />
 <Route path="/" element={token ? <Feed /> : <Navigate to="/login" />} />
 <Route path="/login" element={<Login />} />
 <Route path="/register" element={<Register />} />
@@ -60,7 +61,7 @@ return (
 <Route path="/notifications" element={token ? <div className="placeholder-page">{t('notificationsPlaceholder')}</div> : <Navigate to="/login" />} />
 <Route path="/messages" element={token ? <MessagesPage /> : <Navigate to="/login" />} />
 <Route path="/saved" element={token ? <SavedPostsPage /> : <Navigate to="/login" />} />
-<Route path="/profile" element={token ? <ProfilePage /> : <Navigate to="/login" />} />
+  <Route path="/profile" element={token ? <ProfilePage /> : <Navigate to="/login" />} />
 </Routes>
 </main>
 
