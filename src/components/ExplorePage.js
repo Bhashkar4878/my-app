@@ -10,7 +10,7 @@ const [loading, setLoading] = useState(true);
 const [err, setErr] = useState('');
 const { t } = useTranslation();
 
-
+useEffect(() => { ... }, [t]);
 useEffect(() => {
 let mounted = true;
 async function load(){
