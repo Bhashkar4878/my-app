@@ -30,12 +30,18 @@ if(!res.ok) {
     path: API_BASE + path,
     response: data
   });
-  throw { status: res.status, data };
+ // instead of
+// throw { status: res.status, data };
+const err = new Error(`Request failed: ${res.status}`);
+err.status = res.status;
+err.data = data;
+throw err;
 }
 return data;
 }
 
-
+const api = { auth, posts, messages, explore, profile, translate };
+export default api;
 export const auth = {
 login: (username, password) => request('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
 register: (username, password) => request('/auth/register', { method: 'POST', body: JSON.stringify({ username, password }) }),
